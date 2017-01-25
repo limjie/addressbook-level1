@@ -211,13 +211,17 @@ public class AddressBook {
         processProgramArgs(args);
         loadDataFromStorage();
         while (true) {
-            String userCommand = getUserInput();
-            echoUserCommand(userCommand);
-            String feedback = executeCommand(userCommand);
-            showResultToUser(feedback);
+            echoAndShowToUser();
         }
     }
 
+    private static void echoAndShowToUser() {
+		String userCommand = getUserInput();
+		echoUserCommand(userCommand);
+		String feedback = executeCommand(userCommand);
+		showResultToUser(feedback);
+	}
+    
     /*
      * NOTE : =============================================================
      * The method header comment can be omitted if the method is trivial
@@ -315,22 +319,34 @@ public class AddressBook {
         if (filePath == null) {
             return false;
         }
-        Path filePathToValidate;
+        return isValid(filePath);
+    }
+
+	private static boolean isValid(String filePath) {
+		Path filePathToValidate;
         try {
             filePathToValidate = Paths.get(filePath);
         } catch (InvalidPathException ipe) {
             return false;
         }
         return hasValidParentDirectory(filePathToValidate) && hasValidFileName(filePathToValidate);
-    }
+	}
 
     /**
      * Returns true if the file path has a parent directory that exists.
      */
     private static boolean hasValidParentDirectory(Path filePath) {
         Path parentDirectory = filePath.getParent();
-        return parentDirectory == null || Files.isDirectory(parentDirectory);
+        return isNull(parentDirectory) || isDirectory(parentDirectory);
     }
+
+	private static boolean isDirectory(Path parentDirectory) {
+		return Files.isDirectory(parentDirectory);
+	}
+
+	private static boolean isNull(Path parentDirectory) {
+		return parentDirectory == null;
+	}
 
     /**
      * Returns true if file path has a valid file name.
@@ -339,9 +355,16 @@ public class AddressBook {
      * If a file already exists, it must be a regular file.
      */
     private static boolean hasValidFileName(Path filePath) {
-        return filePath.getFileName().toString().lastIndexOf('.') > 0
-                && (!Files.exists(filePath) || Files.isRegularFile(filePath));
+        return hasExtension(filePath) && isExistingAndRegular(filePath);
     }
+
+	private static boolean isExistingAndRegular(Path filePath) {
+		return !Files.exists(filePath) || Files.isRegularFile(filePath);
+	}
+
+	private static boolean hasExtension(Path filePath) {
+		return filePath.getFileName().toString().lastIndexOf('.') > 0;
+	}
 
     /**
      * Initialises the in-memory data using the storage file.
@@ -368,7 +391,11 @@ public class AddressBook {
         final String[] commandTypeAndParams = splitCommandWordAndArgs(userInputString);
         final String commandType = commandTypeAndParams[0];
         final String commandArgs = commandTypeAndParams[1];
-        switch (commandType) {
+        return execute(commandType, commandArgs);
+    }
+
+	private static String execute(final String commandType, final String commandArgs) {
+		switch (commandType) {
         case COMMAND_ADD_WORD:
             return executeAddPerson(commandArgs);
         case COMMAND_FIND_WORD:
@@ -386,7 +413,7 @@ public class AddressBook {
         default:
             return getMessageForInvalidCommandInput(commandType, getUsageInfoForAllCommands());
         }
-    }
+	}
 
     /**
      * Splits raw user input into command word and command arguments string
@@ -1146,12 +1173,16 @@ public class AddressBook {
     /**
      * Removes sign(p/, d/, etc) from parameter string
      *
-     * @param s  Parameter as a string
-     * @param sign  Parameter sign to be removed
+     * @param fullString  Parameter as a string
+     * @param prefix  Parameter sign to be removed
      * @return  string without the sign
      */
-    private static String removePrefixSign(String s, String sign) {
-        return s.replace(sign, "");
+    private static String removePrefixSign(String fullString, String prefix) {
+        if (fullString.startsWith(prefix)) {
+        	return fullString.replaceFirst(prefix, "");
+        } else {
+        	return fullString;
+        }
     }
 
     /**
