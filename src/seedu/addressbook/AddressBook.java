@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Scanner;
@@ -183,6 +184,10 @@ public class AddressBook {
      */
     private static final ArrayList<String[]> ALL_PERSONS = new ArrayList<>();
 
+	private static final String COMMAND_SORT_WORD = "sort";
+
+	private static final String MESSAGE_ADDRESSBOOK_SORTED = "Address book has been sorted!";
+
     /**
      * Stores the most recent list of persons shown to the user as a result of a user command.
      * This is a subset of the full list. Deleting persons in the pull list does not delete
@@ -208,7 +213,44 @@ public class AddressBook {
 
     public static void main(String[] args) {
         showWelcomeMessage();
-        processProgramArgs(args);
+        if (args.length >= 2) {
+		    String[] message = { MESSAGE_INVALID_PROGRAM_ARGS };
+			for (String m : message) {
+			    System.out.println(LINE_PREFIX + m);
+			}
+			String[] message1 = { MESSAGE_GOODBYE, DIVIDER, DIVIDER };
+		    for (String m1 : message1) {
+			    System.out.println(LINE_PREFIX + m1);
+			}
+			System.exit(0);
+		}
+		
+		if (args.length == 1) {
+		    String filePath = args[0];
+			if (!isValidFilePath(filePath)) {
+			    String[] message = { String.format(MESSAGE_INVALID_FILE, filePath) };
+				for (String m : message) {
+				    System.out.println(LINE_PREFIX + m);
+				}
+				String[] message1 = { MESSAGE_GOODBYE, DIVIDER, DIVIDER };
+			    for (String m1 : message1) {
+				    System.out.println(LINE_PREFIX + m1);
+				}
+				System.exit(0);
+			}
+			
+			storageFilePath = filePath;
+			createFileIfMissing(filePath);
+		}
+		
+		if(args.length == 0) {
+		    String[] message = { MESSAGE_USING_DEFAULT_FILE };
+			for (String m : message) {
+			    System.out.println(LINE_PREFIX + m);
+			}
+			storageFilePath = DEFAULT_STORAGE_FILEPATH;
+			createFileIfMissing(storageFilePath);
+		}
         loadDataFromStorage();
         while (true) {
             echoAndShowToUser();
@@ -410,12 +452,34 @@ public class AddressBook {
             return getUsageInfoForAllCommands();
         case COMMAND_EXIT_WORD:
             executeExitProgramRequest();
+        case COMMAND_SORT_WORD:
+        	return executeSortAddressBook();
         default:
             return getMessageForInvalidCommandInput(commandType, getUsageInfoForAllCommands());
         }
 	}
 
-    /**
+    private static String executeSortAddressBook() {
+		// TODO Auto-generated method stub
+    	sortAddressBook();
+		return MESSAGE_ADDRESSBOOK_SORTED;
+	}
+
+	private static void sortAddressBook() {
+		// TODO Auto-generated method stub
+		Comparator<String[]> addressBookComparator = new Comparator<String[]>() {
+			
+			@Override
+			public int compare(String[] o1, String[] o2) {
+				// TODO Auto-generated method stub
+				return getNameFromPerson(o1).compareTo(getNameFromPerson(o2));
+			}
+		};
+		ALL_PERSONS.sort(addressBookComparator);
+		savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
+	}
+
+	/**
      * Splits raw user input into command word and command arguments string
      *
      * @return  size 2 array; first element is the command type and second element is the arguments string
@@ -511,15 +575,30 @@ public class AddressBook {
      */
     private static ArrayList<String[]> getPersonsWithNameContainingAnyKeyword(Collection<String> keywords) {
         final ArrayList<String[]> matchedPersons = new ArrayList<>();
+        Collection<String> uppercaseKeywords = convertToUppercase(keywords);
         for (String[] person : getAllPersonsInAddressBook()) {
-            final Set<String> wordsInName = new HashSet<>(splitByWhitespace(getNameFromPerson(person)));
-            if (!Collections.disjoint(wordsInName, keywords)) {
+        	ArrayList<String> nameList = splitByWhitespace(getNameFromPerson(person));
+        	ArrayList<String> uppercaseNameList = convertToUppercase(nameList);
+            final Set<String> wordsInName = new HashSet<>(uppercaseNameList);
+            if (!Collections.disjoint(wordsInName, uppercaseKeywords)) {
                 matchedPersons.add(person);
             }
         }
         return matchedPersons;
     }
-
+    /**
+     * Convert a ArrayList of String to uppercase
+     * 
+     * @param input ArrayList of String to be converted
+     * @return ArrayList of String converted to uppercase
+     */
+    private static ArrayList<String> convertToUppercase(Collection<String> input) {
+    	ArrayList<String> output = new ArrayList<String>();
+    	for (String word : input) {
+    		output.add(word.toUpperCase());
+    	}
+    	return output;
+    }
     /**
      * Deletes person identified using last displayed index.
      *
