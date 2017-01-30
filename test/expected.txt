@@ -71,6 +71,13 @@
 || 
 || exit: Exits the program.	Example: exit
 || help: Shows program usage instructions.	Example: help
+|| sort: Sorts address book.
+|| 	Example: sort
+|| 
+|| edit: Edits a person identified by the index number used in the last find/list call.
+|| 	Parameters: INDEX n/NAME
+|| 	Example: edit n/Jane Doe
+|| 
 || ===================================================
 || Enter command: || [Command entered:  clear]
 || Address book has been cleared!
