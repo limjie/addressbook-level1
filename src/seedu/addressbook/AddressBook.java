@@ -1454,7 +1454,7 @@ public class AddressBook {
      *            to be validated
      */
     private static boolean isPersonDOBValid(String DOB) {
-        return DOB.matches("\\S+/\\S+\\/\\S+"); // DOB is
+        return DOB.matches("\\S+/\\S+/\\S+"); // DOB is
         // [non-whitespace]/[non-whitespace]/[non-whitespace]
         // TODO: implement a more permissive validation
     }
